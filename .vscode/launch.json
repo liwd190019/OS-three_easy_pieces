@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/wdli/Desktop/OS/OS-three_easy_pieces/5_chapte",
+      "program": "/Users/wdli/Desktop/OS/OS-three_easy_pieces/5_chapte/build/Debug/outDebug"
+    }
+  ]
+}
