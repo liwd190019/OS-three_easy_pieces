@@ -21,3 +21,9 @@ FCFS scheduling algorithm is not nonpreemepive
 *non-preemptive:* once the resources (CPU cycles) are allocated to a process, the process holds the CPU till it gets terminated or reaches a waiting state.
 
 *turnaround time*: The amount of time taken to complete a process or fulfill a request.
+
+## 5_chapter
+
+**user mode**: 
+
+**kernel mode**:
