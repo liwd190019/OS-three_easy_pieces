@@ -6,8 +6,8 @@
       "type": "lldb",
       "request": "launch",
       "args": [],
-      "cwd": "/Users/wdli/Desktop/OS/OS-three_easy_pieces/5_chapte",
-      "program": "/Users/wdli/Desktop/OS/OS-three_easy_pieces/5_chapte/build/Debug/outDebug"
+      "cwd": "/Users/wdli/Desktop/OS/OS-three_easy_pieces/14_chapter",
+      "program": "/Users/wdli/Desktop/OS/OS-three_easy_pieces/14_chapter/build/Debug/outDebug"
     }
   ]
 }
