@@ -67,6 +67,7 @@ Operating System Issues:
 3. perform a few additional steps when a context switch occurs
 4. provide exceptional handles
   
+**page table:** in a virtual memory system, a page table is a data structure used by the operating system to store the mapping between virtual address and physical addresses.
 
 ## chapter 17: free-space management
 explore three questions:
@@ -74,4 +75,48 @@ explore three questions:
 - how can we reduce fragmentation?
 - what are hte time and space overheads of different approaches?
 
+
+## chapter 18: page introduction
+the operating system takes one of two approaches when solving most any space-management problem. The first approach is to chop things up into variable-sized pieces, as we saw with segmentation in virtual memory. But, this method divides a space into different-size chunks, the space can become fragmented.
+
+It may be worth considering the second approach: to chop up space into fixed-sized pieces. we call this idea **paging**. Instead of spliting up a process's address space into some number of variable-sized logical segments, we divide it into fixed-sized units, each of which we call a page. We view physical memory as an array of fixed-sized slots called **page frames**.
+
+Paging has a number of advantages over our previous approaches.  
+one of the most important improvement will be flexibility: with a fully-developed paging approach, the system will be able to support the abstraction of an address space effectively, regardless of how a process uses the address space; we won't, for example, make assumptions about the direction the heap and stack grow and how they are used.  
+Another advantages is the simplicity of free-space management that paging affords. For example, when the OS wishes to place our tiny 64-byte address space into our eight-page physical memory, it simply finds four free pages; perhaps the OS keeps the free-list of all free pages for this, and just grabs the first four free pages of of this list.
+
+**how to record where each virtual pages of the address space is placed in physical memory?** OS keeps a per-process data structure called page table. The major role of the page table is to store address translations for each of the virtual pages of the address space.
+
+translate the virtual address that the process generated: 
+1. split the virtual address into two components: the virtual page number (VPN), and the offset within the page.
+2. TO calculate VPN & offset: lower(log2(total page number))=VPN bits(the higher), offset=remaining bits (lower)
+
+physical frame number (PFN): an address in physical memory. it corresponds to a virtual page number by page table.
+
+**Address space**: an address space is a set of discrete addresses that identifies a range of memory locations.
+
+**page table base register(PTBR)**
+
+The process of accessing memory with paging
+```C
+// Extract the VPN from the virtual address
+VPN = (VirtualAddress & VPN_MASK) >> SHIFT
+// Form the address of the page-table entry (PTE)
+PTEAddr = PTBR + (VPN * sizeof(PTE))
+// Fetch the PTE
+PTE = AccessMemory(PTEAddr)
+// Check if process can access the page
+if (PTE.Valid == False)
+    RaiseException(SEGMENTATION_FAULT)
+else if (CanAccess(PTE.ProtectBits) == False)
+    RaiseException(PROTECTION_FAULT)
+else
+    // Access is OK: form physical address and fetch it
+offset = VirtualAddress & OFFSET_MASK
+PhysAddr = (PTE.PFN << PFN_SHIFT) | offset
+Register = AccessMemory(PhysAddr)
+```
+
+## Chapter 19: Paging: faster translation(TLB: translation-lookaside buffer)
+a TLB is part of chip's memory management unit, and is simply a hardware cache of popular virtual to physical address translation thus a better name would be an address-translation cache.
 
