@@ -171,3 +171,183 @@ else
 
 ```
 TO keep a small amount of memory free, most operating systems thus have some kind of hign watermark(HW) and low watermark(LW) to help decide when to start evicting pages from memory.
+
+## Chapter 28: Locks  
+lock variable
+```C
+lock_t mutex; // some globally-allocated lock ’mutex’
+ ...
+lock(&mutex);
+balance = balance + 1;
+unlock(&mutex);
+```
+A lock is just a variable, and thus to use one, you must declare a lock variable of some kind. This lock variable holds the state of the lock *at any instant in time*. It is either available (or unlocked or free) and thus no thread holds the lock, or __acquired__ (or locked or held), and thus exactly one thread holds the lock and presumably is in a critical section.
+
+__Evaluate Locks__:  
+1. whether the lock does its basic task, which is to provide *mutual exclusion*.
+2. fairness: Does each thread contending for the lock get a fair shot at acquiring it once it is free? More extreme case: Does any thread contending for the lock starve while doing so, thus never obtaining it?  
+- Concept understanding: __starve__. "starvation" refers to a situation where a thread or process is unable to make progress because it is consistently denied access to a particular resource, such as a lock. When a thread is starved, it remains blocked or delayed, waiting for a resource that is never made available to it.
+3. performance, specifically the time overheads added by using the lock.
+There are a few different cases that are worth considering here:
+- no contention: when a single thread is running and grabs and releases the lock, what is the overhead of doing so?
+- multiple threads are contending for the lock on a single CPU
+- How does the lock perform when there are multiple CPUs involved, and threads on each contending for the lock?
+
+### Controlling Interrupts  
+disable interrupts for critical sections. This solution was invented for single-processor systems.
+```C
+void lock() {
+    DisableInterrupts();
+}
+void unlock() {
+    EnableInterrupts();
+}
+```
+Pro:  
+1. simplicity
+Con:
+1. this approach requires us to allow any calling thread to perform a privileged operation(turning interrupts on and off), and thus trust that this facility is not abused.
+    - here, the trouble manifests in many of ways: 
+    - a greedy program could call lock() at the beginning of its execution and thus monopolize the processor; _monopolize_: obtain exclusive possession
+    - an errant or malicious program could call lock and go into an endless loop.
+2. This approach does not work on multiprocessors. Threads will be able to run on other processors, and thus could enter the critical section.
+3. turning off interrupts for extended periods of time can lead to interrupts becoming lost, which can lead to serious systems problems.
+4. this approach can be inefficient.
+Turning off interrupts is only used in limited contexts.(like OS itself will use interrup masking to guarantee atomicity when accessing its own data structures.)
+
+### first attempt: just using loads/stores
+
+```C
+typedef struct __lock_t { int flag; } lock_t;
+
+void init(lock_t *mutex) {
+    // 0 -> lock is available, 1 -> held
+     mutex->flag = 0;
+}
+
+ void lock(lock_t *mutex) {
+    while (mutex->flag == 1) // TEST the flag
+    ; // spin-wait (do nothing)
+    mutex->flag = 1; // now SET it!
+ }
+
+ void unlock(lock_t *mutex) {
+    mutex->flag = 0;
+ }
+```
+
+*spin-wait*: wait in a loop  
+The code has two problems:
+1. correctness: with timely interrupts, we can easily produce a case where both threads set the flag to 1 and both threads are thus able to enter the critical section.
+![](28_locks/media-1-365c0de3ac2ea1fd35decfd09a39d173-c911333237452f3b.jpeg)
+2. performance: a thread endlessly checks the value of flag. Spin-waiting wastes time waiting for another thread to release a lock. The thread that the waiter is waiting for cannot run until a context switch occurs.
+
+
+### test-and-set+spin_waiting
+Why it looks so strange?
+```C
+int TestAndSet(int *old_ptr, int new){
+    int old = *old_ptr; // fetch old value at old_ptr
+    *old_ptr = new; // store ’new’ into old_ptr
+    return old;
+}
+```
+
+```C
+int TestAndSet(int *old_ptr, int new){
+    int old = *old_ptr; // fetch old value at old_ptr
+    *old_ptr = new; // store
+    return old; // return the old value
+}
+```
+
+```C
+int TestAndSet(int *old_ptr, int new){
+    int old = *old_ptr; // fetch old value at old_ptr
+    *old_ptr = new; 
+    return old;
+}
+```
+
+
+```C
+typedef struct __lock_t {
+ int flag;
+ } lock_t;
+
+ void init(lock_t *lock) {
+ // 0: lock is available, 1: lock is held
+ lock->flag = 0;
+ }
+
+ void lock(lock_t *lock) {
+ while (TestAndSet(&lock->flag, 1) == 1)
+ ; // spin-wait (do nothing)
+ }
+
+ void unlock(lock_t *lock) {
+ lock->flag = 0;
+ }
+ ```
+
+As long as the lock is held by another thread, `TestAndSet()` will repeatedly return a 1.
+
+Personally, the greatest improvement of this code with the false code is that this code change `lock->flag` before `while` loop determination. However the false code (use flag == true to determine the lock) change the value `"after"` the while loop determining part.
+
+### Evaluate spin locks
+use the three criteria to evaluate spin locks:
+1. correctness: it provide mutual exclusion
+2. fairness: no. a thread spinning may spin forever under contention. simple spin locks(as discussed thus far) are not fair and may lead to sty specific starvation.  
+- Because spin locks do not guarantee any specific order for granting access to waiting threads, there is a potential for starvation. A thread might continuously be outrun by other threads arriving later, preventing it from acquiring the lock and entering the critical section.
+3. performance: 
+two cases:
+- single CPU: performance overhead can be quite painful. Consider the case where the thread holding the lock gets preempted within a critical section. The scheduler may then run every other thread (imagine there are N-1 others), with each trying to acquire the lock. In this situation, each thread will spin for a time slice before releasing the CPU, wasting CPU cycles.
+- multiple CPUs: spin locks work reasonably well. critical section is short. when thread A runs, B will spin on another CPU. since critical section is short, B doesn't need to wait for a long time in spinning.
+
+### Compare and Swap
+```C
+ int CompareAndSwap(int *ptr, int expected, int new) {
+    int original = *ptr;
+    if (original == expected)
+       *ptr = new;
+       return original;
+ }
+```
+```C
+ void lock(lock_t *lock) {
+ while (CompareAndSwap(&lock->flag, 0, 1) == 1)
+    ; // spin
+ }
+```
+
+### Load-Linked and Store-Conditional
+```C
+int LoadLinked(int *ptr) {
+    return *ptr;
+ }
+
+ int StoreConditional(int *ptr, int value) {
+    if (no update to *ptr since LoadLinked to this address) {
+    *ptr = value;
+    return 1; // success!
+    } else {
+    return 0; // failed to update
+    }
+ }
+```
+
+```C
+void lock(lock_t *lock) {
+ while (1) {
+ while (LoadLinked(&lock->flag) == 1)
+ ; // spin until it’s zero
+ if (StoreConditional(&lock->flag, 1) == 1)
+ return; // if set-it-to-1 was a success: all done
+ // otherwise: try it all over again
+ }
+ }
+
+ void unlock(lock_t *lock) {
+ lock->flag = 0;
+ }
+```
