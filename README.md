@@ -120,3 +120,54 @@ Register = AccessMemory(PhysAddr)
 ## Chapter 19: Paging: faster translation(TLB: translation-lookaside buffer)
 a TLB is part of chip's memory management unit, and is simply a hardware cache of popular virtual to physical address translation thus a better name would be an address-translation cache.
 
+**page directory**: either can be used to tell you 
+1. where a page of teh page table is, Or that
+2. the entire page of the page table contains no valid pages.
+
+**page directory entries(PDE)**: a PDE has a valid bit and a **page frame number(PFN)**.
+
+## chapter 21: beyond physical memory: mechanisms
+
+the page fault: if a page is not present, the OS in put in chatge to handle the page fault. The appropriately-named OS *page-fault handler* runs to determine what to do.  
+If a page is not present and has been swapped to disk, the OS will need to swap teh page into memory in order to service the page fault.  
+*How will the OS know where where to find hte desired page?* page table stores such information. 
+1. The OS could use the bits in the PTE normally used for data such as the PFN of teh page for a disk address. When the OS receives a page fault for a page, ti looks in the PTE to find teh address, and issue the request to disk to fetch the page into memory.
+2. When the disk I/O completes, the OS will then update the page table to mark the page as present, update the PFN field of teh page-table entry(PTE) to record the in-memory location of the newly-fetched page, and retry the instruction.
+3. a last restart would find the translation from memory at the translated physical address.
+
+If the page is full: *page replacement policy*
+
+**classification**: page present vs page valid
+a page is considered "present" if it currently resides in physical memory(RAM).
+if a page is not present, a page fault occurs, and the operating system needs to fetch the required page from swap space (launches PAGE_FAULT exception to the OS)
+
+page valid: This term is not as standard and can be context-dependent. It might refer to whether a page is valid in the context of a specific operation or a particular criteria. famous example: segmentation fault
+
+the present-bit in the page-table entry informs the operating system that a page exists in physical memory.
+
+**Page Fault Control Flow(Hardware Version)**
+```C
+VPN = (VirtualAddress & VPN_MASK) >> SHIFT
+(Success, TlbEntry) = TLB_Lookup(VPN)
+if(Success == True)
+    Offset = VirtualAddress & Offset_Mask
+    PhysAddr = (TlbEntry.PFN << SHIFT) | offset
+    Register = AccessMemory(PhysicalAddress)
+else
+    // TLB Miss
+    PTEAddress = PTBR + (VPN * sizeof(PTE)) // I don't know why PTEAddress still use array at this point
+    PTE = AccessMemory(PTEAddress)
+    if (PTE.Valid == False)
+        RaiseException(SECMENTATION_FAULT)
+    else
+        if(PTE.Present == False) // page fault, but still valid
+            RaiseException(PAGE_FAULT)
+        else
+            TLB_Insert(VPN, PTE.PFN)
+            RetryInstruction()
+```
+**page-fault control flow algorithm (software version)**
+```C
+
+```
+TO keep a small amount of memory free, most operating systems thus have some kind of hign watermark(HW) and low watermark(LW) to help decide when to start evicting pages from memory.
