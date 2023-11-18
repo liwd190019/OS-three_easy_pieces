@@ -125,7 +125,7 @@ a TLB is part of chip's memory management unit, and is simply a hardware cache o
 2. the entire page of the page table contains no valid pages.
 
 **page directory entries(PDE)**: a PDE has a valid bit and a **page frame number(PFN)**.
-
+ 
 ## chapter 21: beyond physical memory: mechanisms
 
 the page fault: if a page is not present, the OS in put in chatge to handle the page fault. The appropriately-named OS *page-fault handler* runs to determine what to do.  
@@ -366,3 +366,36 @@ void *producer(void *arg){
     }
 }
 ```
+
+
+## chapter 37: Hard Disk Drives
+The basic interface for all modern drives are straightforward: The drive consists a large number of sectors(512-byte), each of which can be read or written. The sectors are numbered from 0 to n-1 on a disk with n sectors. Thus, we can view the disk as an array of sectors; 0 to n-1 is thus the addresss space of the drive.  
+Multi-sector operations are possible; indeed, many file systems will read or write 4KB ata time. However, when updating the disk, teh only guarantee drive manyfactures make is that a single 512-byte write is atomic.  
+Tehre are some assumptions most clients of disk drives make, but that are not specified directly in the interface, called "unwritten contract" of disk drive.
+
+### Basic Geometry
+__platter__: a circular hard surface on which data is stored persistently by inducing magnetic changes to it. A disk may have one or more platters; each platter has 2 sides, each of which is called a __surface__.
+
+__spindle__: the platter are all bound together around teh spindle, which is connected to a motor that spins the platters around(while the drive is powered on) at a constant (fixed) rate. The rate of rotation is often measured in rotations per minute (RPM), and typical modern values are in teh 7200 RPM to 15000 RPM range.
+
+__track__: data is encoded on each surface in concentric circles of sectors; we call one such concentric circle a track. A single surface contains many thousands and thousands of tracks, tightly packed together, with hundreds of tracks fitting into the width of a human hair.
+
+__disk head__: a mechanism that allows us to either sense (i.e. read) the magnetic patterns on the disk or to induce a change in (i.e. write) them. THis process of reading and writing is accomplished by the disk head; there is one such head per surface of the drive. The disk head is attached to a single disk arm, which moves across the surface to position the head over the desired track.
+
+### a simple disk drive
+__rotational delay__: In particular, the disk mutst just wait for the desired sector to ratate under the disk head.  
+__seek__: the time wasted on moving the disk arm to the correct track.
+
+the time spent on seeking: acceleration-coasting-settling  
+__transfer__: the data is either read from or wrtten to the surface.
+
+### some other details  
+1. track skew
+2. outer tracks tend to have more sectors than inner tracks, which is a result of geometry; there is simply more room out there. These tracks are often referred to as multi-zoned disk drives, where the disk is organized into multiple zones, and where a zone is consecutive set of tracks on a surface. Each zone has the same number of sectors per track, and outer zone have more sectors than inner zones.
+3. cache/track buffer
+4. write back / wrirte through
+
+### calculation
+random workload: ussue small reads to random locations on thee disk  
+sequential workload: read a large number of sectors consecutively from the disk, without jumping around.
+
