@@ -353,3 +353,16 @@ void lock(lock_t *lock) {
 ```
 
 ## chapter 29: Lock-Based Concurrent data structures
+
+## chapter 30: Conditional Variables
+```c
+cond_t empty, fill;
+mutex_t mutex;
+
+void *producer(void *arg){
+    int i;
+    for (int i = 0; i < loops; i++){
+        Pthread_mutex_lock(&mutex);
+    }
+}
+```
