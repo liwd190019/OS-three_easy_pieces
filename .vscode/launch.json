@@ -3,22 +3,11 @@
   "configurations": [
     {
       "name": "C/C++ Runner: Debug Session",
-      "type": "cppdbg",
+      "type": "lldb",
       "request": "launch",
       "args": [],
-      "stopAtEntry": false,
-      "externalConsole": false,
-      "cwd": "/home/wenda/Desktop/OS-three_easy_pieces/31_semaphores",
-      "program": "/home/wenda/Desktop/OS-three_easy_pieces/31_semaphores/build/Debug/outDebug",
-      "MIMode": "lldb",
-      "miDebuggerPath": "lldb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ]
+      "cwd": "/Users/wdli/Desktop/OS/OS-three_easy_pieces/my_malloc_free",
+      "program": "/Users/wdli/Desktop/OS/OS-three_easy_pieces/my_malloc_free/build/Debug/outDebug"
     }
   ]
 }

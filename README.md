@@ -389,7 +389,7 @@ __seek__: the time wasted on moving the disk arm to the correct track.
 the time spent on seeking: acceleration-coasting-settling  
 __transfer__: the data is either read from or wrtten to the surface.
 
-### some other details  
+### **ome** other details  
 1. track skew
 2. outer tracks tend to have more sectors than inner tracks, which is a result of geometry; there is simply more room out there. These tracks are often referred to as multi-zoned disk drives, where the disk is organized into multiple zones, and where a zone is consecutive set of tracks on a surface. Each zone has the same number of sectors per track, and outer zone have more sectors than inner zones.
 3. cache/track buffer
