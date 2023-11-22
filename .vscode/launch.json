@@ -6,8 +6,8 @@
       "type": "lldb",
       "request": "launch",
       "args": [],
-      "cwd": "/Users/wdli/Desktop/OS/OS-three_easy_pieces/my_malloc_free",
-      "program": "/Users/wdli/Desktop/OS/OS-three_easy_pieces/my_malloc_free/build/Debug/outDebug"
+      "cwd": "/Users/wdli/Desktop/OS/OS-three_easy_pieces/scheduling",
+      "program": "/Users/wdli/Desktop/OS/OS-three_easy_pieces/scheduling/build/Debug/outDebug"
     }
   ]
 }
