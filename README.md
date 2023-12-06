@@ -402,3 +402,4 @@ sequential workload: read a large number of sectors consecutively from the disk,
 ## chapter 38:
 test1
 test2
+test3
